@@ -11,16 +11,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
-
-import java.io.IOException;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -67,23 +63,7 @@ public class MainActivity extends ActionBarActivity {
 
         public void onFinish() {
             t.setText("" + st / 1000);
-            thread = new Thread(new Runnable(){
-                @Override
-                public void run() {
-                    Looper.prepare();
-                    try {
-                        ResponseHandler<String> responseHandler = new BasicResponseHandler();
-                        String response = httpclient.execute(httppost, responseHandler);
-                        l=Character.getNumericValue(response.charAt(response.length()-1));
-                        st=l*1000;
-                        setText(t1,response);
-                        setTime(c1,st);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            thread.start();
+            new extract().execute();
         }
 
         public void onTick(long millisUntilFinished) {
@@ -92,23 +72,30 @@ public class MainActivity extends ActionBarActivity {
         }
 
     }
-    private void setText(final TextView text,final String value){
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                text.setText(value);
+    public class extract extends AsyncTask<Void,Void,String>
+    {
+        @Override
+        protected String doInBackground(Void... params) {
+            try {
+                ResponseHandler<String> responseHandler = new BasicResponseHandler();
+                String response = httpclient.execute(httppost, responseHandler);
+                l = Character.getNumericValue(response.charAt(response.length() - 1));
+                st = l * 1000;
+                return response;
+            }catch (Exception e)
+            {
+                return e.toString();
             }
-        });
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            t1.setText(s);
+
+            c1= new Mycount(st,i);
+            c1.start();
+
+        }
     }
 
-    private void setTime(final CountDownTimer c,final long value){
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                c1= new Mycount(value,i);
-                c1.start();
-
-            }
-        });
-    }
 }
